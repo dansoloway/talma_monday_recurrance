@@ -67,7 +67,7 @@ All **10** department task boards — Marketing, Projects, and Management includ
 - Skips when the event is not a recurrence parent or a finished child (200, no error)
 - Notifies the Owner when recurrence fields are missing or the series completes
 - Child items copy Focus Areas, Objectives, Owner, and related fields from the parent
-- Sets legacy **Quarter** to `Q1`–`Q4`; when **Quarter NEW** exists (Technology), also sets `YYYY - Qn`
+- Sets legacy **Quarter** to `Q1`–`Q4`; when **QuarterYear** exists (Technology), also sets `YYYY - Qn`
 
 ## Related projects
 

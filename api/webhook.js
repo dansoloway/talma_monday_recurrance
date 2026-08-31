@@ -21,7 +21,8 @@ const COL_TITLES = {
   OWNER_PEOPLE: 'Owner',
   PARTNERS: 'Partners / Supporters',
   QUARTER: 'Quarter',
-  QUARTER_NEW: 'Quarter NEW',
+  QUARTER_YEAR: 'QuarterYear',
+  QUARTER_YEAR_LEGACY: 'Quarter NEW',
   KPI: 'KPI',
   NOTES: 'Notes',
   CROSS_DEPT: 'Cross-Department Collaboration',
@@ -32,7 +33,7 @@ const COL_TITLES = {
   COLOR_STATUS: 'color status automation',
 };
 
-const QUARTER_NEW_FALLBACK_ID = 'dropdown_mm6b9hp2';
+const QUARTER_YEAR_FALLBACK_ID = 'dropdown_mm6b9hp2';
 
 const TEXT_TITLES_TO_COPY = [
   COL_TITLES.OWNER,
@@ -136,9 +137,10 @@ function getYearQuarterFromDate(isoDate) {
   return `${year} - ${quarter}`;
 }
 
-function resolveQuarterNewColumnId(bc) {
-  return bc.titleToId[COL_TITLES.QUARTER_NEW]
-    || (bc.columns.some((c) => c.id === QUARTER_NEW_FALLBACK_ID) ? QUARTER_NEW_FALLBACK_ID : null);
+function resolveQuarterYearColumnId(bc) {
+  return bc.titleToId[COL_TITLES.QUARTER_YEAR]
+    || bc.titleToId[COL_TITLES.QUARTER_YEAR_LEGACY]
+    || (bc.columns.some((c) => c.id === QUARTER_YEAR_FALLBACK_ID) ? QUARTER_YEAR_FALLBACK_ID : null);
 }
 
 function getDropdownIdByColumnId(bc, columnId, labelText) {
@@ -325,15 +327,15 @@ async function createChildItem(parent, parentId, date, boardId, bc, fallbackUser
   const quarterId = colId(bc, 'QUARTER');
   if (quarterId && quarterDropdownId) colValues[quarterId] = { ids: [quarterDropdownId] };
 
-  // Technology (and any board with Quarter NEW): also set year-aware label e.g. "2026 - Q2"
-  const quarterNewId = resolveQuarterNewColumnId(bc);
-  if (quarterNewId) {
+  // Technology (and any board with QuarterYear): also set year-aware label e.g. "2026 - Q2"
+  const quarterYearId = resolveQuarterYearColumnId(bc);
+  if (quarterYearId) {
     const yearQuarterLabel = getYearQuarterFromDate(date);
-    const yearQuarterDropdownId = getDropdownIdByColumnId(bc, quarterNewId, yearQuarterLabel);
+    const yearQuarterDropdownId = getDropdownIdByColumnId(bc, quarterYearId, yearQuarterLabel);
     if (yearQuarterDropdownId) {
-      colValues[quarterNewId] = { ids: [yearQuarterDropdownId] };
+      colValues[quarterYearId] = { ids: [yearQuarterDropdownId] };
     } else {
-      console.log(`Board ${boardId} has no Quarter NEW label "${yearQuarterLabel}", skipping year-quarter write`);
+      console.log(`Board ${boardId} has no QuarterYear label "${yearQuarterLabel}", skipping year-quarter write`);
     }
   }
 
