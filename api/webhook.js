@@ -138,9 +138,47 @@ function getYearQuarterFromDate(isoDate) {
 }
 
 function resolveQuarterYearColumnId(bc) {
+  const statusCol = bc.columns.find((c) => (c.title === COL_TITLES.QUARTER_YEAR || c.title === COL_TITLES.QUARTER_YEAR_LEGACY) && (c.type === 'status' || c.type === 'color'));
+  if (statusCol) return statusCol.id;
+
   return bc.titleToId[COL_TITLES.QUARTER_YEAR]
     || bc.titleToId[COL_TITLES.QUARTER_YEAR_LEGACY]
     || (bc.columns.some((c) => c.id === QUARTER_YEAR_FALLBACK_ID) ? QUARTER_YEAR_FALLBACK_ID : null);
+}
+
+function getQuarterYearUpdate(bc, columnId, labelText) {
+  if (!columnId) return null;
+  const col = bc.columns.find((c) => c.id === columnId);
+  if (!col) return null;
+  const isStatus = col.type === 'status' || col.type === 'color';
+  try {
+    const settings = JSON.parse(col.settings_str || '{}');
+    const rawLabels = settings.labels;
+    if (isStatus) {
+      if (Array.isArray(rawLabels)) {
+        const found = rawLabels.find((l) => (typeof l === 'string' ? l : l?.name) === labelText);
+        return found ? { label: typeof found === 'string' ? found : found.name } : null;
+      }
+      if (rawLabels && typeof rawLabels === 'object') {
+        const found = Object.values(rawLabels).find((val) => {
+          const str = typeof val === 'string' ? val : val?.name;
+          return str === labelText;
+        });
+        if (found) {
+          const labelStr = typeof found === 'string' ? found : found.name;
+          return { label: labelStr };
+        }
+        return null;
+      }
+      return null;
+    }
+    // Dropdown column
+    if (Array.isArray(rawLabels)) {
+      const found = rawLabels.find((l) => l?.name === labelText);
+      return found ? { ids: [found.id] } : null;
+    }
+    return null;
+  } catch { return null; }
 }
 
 function getDropdownIdByColumnId(bc, columnId, labelText) {
@@ -331,9 +369,9 @@ async function createChildItem(parent, parentId, date, boardId, bc, fallbackUser
   const quarterYearId = resolveQuarterYearColumnId(bc);
   if (quarterYearId) {
     const yearQuarterLabel = getYearQuarterFromDate(date);
-    const yearQuarterDropdownId = getDropdownIdByColumnId(bc, quarterYearId, yearQuarterLabel);
-    if (yearQuarterDropdownId) {
-      colValues[quarterYearId] = { ids: [yearQuarterDropdownId] };
+    const qyUpdate = getQuarterYearUpdate(bc, quarterYearId, yearQuarterLabel);
+    if (qyUpdate) {
+      colValues[quarterYearId] = qyUpdate;
     } else {
       console.log(`Board ${boardId} has no QuarterYear label "${yearQuarterLabel}", skipping year-quarter write`);
     }
