@@ -19,6 +19,7 @@ const COL_TITLES = {
   DEPT_OBJ: 'Department Objective',
   OWNER: 'Primary Owner',
   OWNER_PEOPLE: 'Owner',
+  PARTNER_MANAGERS: 'Managers Partners',
   PARTNERS: 'Partners / Supporters',
   QUARTER: 'Quarter',
   QUARTER_YEAR: 'QuarterYear',
@@ -86,6 +87,15 @@ async function getBoardColumns(boardId) {
 }
 
 function colId(bc, titleKey) {
+  if (titleKey === 'PARTNER_MANAGERS') {
+    return bc.titleToId['Managers Partners']
+      || bc.titleToId['Partner Managers']
+      || (bc.columns.some((c) => c.id === 'multiple_person_mm0qebb7') ? 'multiple_person_mm0qebb7' : null);
+  }
+  if (titleKey === 'NOTES') {
+    return bc.titleToId['Notes']
+      || (bc.columns.some((c) => c.id === 'long_text_mm0fny7p') ? 'long_text_mm0fny7p' : null);
+  }
   return bc.titleToId[COL_TITLES[titleKey]];
 }
 
@@ -306,6 +316,28 @@ function buildChildColumnValues(parentCols, parentId, bc, fallbackUserId) {
     }
   }
 
+  // Managers Partners: inherit from parent
+  const pmColId = colId(bc, 'PARTNER_MANAGERS');
+  if (pmColId) {
+    let parentPersons = parentCols[pmColId]?.persons_and_teams;
+    if (!parentPersons && parentCols[pmColId]?.value) {
+      try {
+        const parsed = JSON.parse(parentCols[pmColId].value);
+        if (Array.isArray(parsed?.personsAndTeams)) {
+          parentPersons = parsed.personsAndTeams;
+        }
+      } catch { /* ignore parse error */ }
+    }
+    if (Array.isArray(parentPersons) && parentPersons.length > 0) {
+      colValues[pmColId] = {
+        personsAndTeams: parentPersons.map((p) => ({
+          id: Number(p.id),
+          kind: p.kind || 'person',
+        })),
+      };
+    }
+  }
+
   TEXT_TITLES_TO_COPY.forEach((title) => {
     const id = bc.titleToId[title];
     if (id && parentCols[id]?.text) colValues[id] = parentCols[id].text;
@@ -322,8 +354,18 @@ function buildChildColumnValues(parentCols, parentId, bc, fallbackUserId) {
   }
 
   const notesId = colId(bc, 'NOTES');
-  if (notesId && parentCols[notesId]?.text) {
-    colValues[notesId] = { text: parentCols[notesId].text };
+  if (notesId) {
+    const parentNotes = parentCols[notesId];
+    if (parentNotes?.text) {
+      colValues[notesId] = { text: parentNotes.text };
+    } else if (parentNotes?.value) {
+      try {
+        const parsed = JSON.parse(parentNotes.value);
+        if (parsed?.text) {
+          colValues[notesId] = { text: parsed.text };
+        }
+      } catch { /* ignore parse error */ }
+    }
   }
 
   // Set TASK TYPE to ONE-TIME by looking up the label dynamically

@@ -66,8 +66,8 @@ All **10** department task boards — Marketing, Projects, and Management includ
 - Returns `{"challenge": "..."}` for monday.com webhook verification
 - Skips when the event is not a recurrence parent or a finished child (200, no error)
 - Notifies the Owner when recurrence fields are missing or the series completes
-- Child items copy Focus Areas, Objectives, Owner, and related fields from the parent
-- Sets legacy **Quarter** to `Q1`–`Q4`; when **QuarterYear** exists (Technology), also sets `YYYY - Qn`
+- Child items copy Focus Areas, Objectives, Owner, Managers Partners, Notes, and related fields from the parent
+- Sets legacy **Quarter** to `Q1`–`Q4`; when **QuarterYear** exists, also sets `YYYY - Qn`
 
 ## Related projects
 
